@@ -1,0 +1,59 @@
+# Script d'audit pour Windows 10 avec journaux d'événements
+
+# Informations générales sur le système
+$systemInfo = Get-CimInstance -ClassName Win32_ComputerSystem
+Write-Host "Nom de l'ordinateur : $($systemInfo.Name)"
+Write-Host "Fabricant : $($systemInfo.Manufacturer)"
+Write-Host "Modèle : $($systemInfo.Model)"
+Write-Host "Système d'exploitation : $($systemInfo.Caption) $($systemInfo.Version)"
+
+# Informations sur le processeur
+$processorInfo = Get-CimInstance -ClassName Win32_Processor
+Write-Host "Processeur : $($processorInfo.Name)"
+Write-Host "Architecture du processeur : $($processorInfo.Architecture)"
+
+# Informations sur la mémoire
+$memoryInfo = Get-CimInstance -ClassName Win32_PhysicalMemory
+$memoryCapacity = ($memoryInfo | Measure-Object -Property Capacity -Sum).Sum / 1GB
+Write-Host "Capacité de la mémoire : $($memoryCapacity) Go"
+
+# Informations sur le disque dur
+$diskInfo = Get-CimInstance -ClassName Win32_DiskDrive
+$diskCapacity = ($diskInfo | Measure-Object -Property Size -Sum).Sum / 1GB
+Write-Host "Capacité du disque dur : $($diskCapacity) Go"
+
+# Informations sur les utilisateurs
+$userInfo = Get-WmiObject Win32_UserAccount
+Write-Host "Utilisateurs du système :"
+foreach ($user in $userInfo) {
+    Write-Host "   - $($user.Name)"
+}
+
+# Informations sur les logiciels installés
+$installedSoftware = Get-WmiObject Win32_Product
+Write-Host "Logiciels installés :"
+foreach ($software in $installedSoftware) {
+    Write-Host "   - $($software.Name)"
+}
+
+# Informations sur les mises à jour
+$updateInfo = Get-HotFix
+Write-Host "Mises à jour installées : $($updateInfo.Count)"
+
+# Informations sur les services en cours d'exécution
+$services = Get-Service
+Write-Host "Services en cours d'exécution :"
+foreach ($service in $services) {
+    Write-Host "   - $($service.DisplayName) : $($service.Status)"
+}
+
+# Récupération des journaux d'événements
+$eventLogs = Get-WinEvent -LogName System, Application, Security -MaxEvents 50
+Write-Host "Journaux d'événements récents :"
+foreach ($eventLog in $eventLogs) {
+    Write-Host "   - Date : $($eventLog.TimeCreated)"
+    Write-Host "     ID de l'événement : $($eventLog.Id)"
+    Write-Host "     Source : $($eventLog.ProviderName)"
+    Write-Host "     Message : $($eventLog.Message)"
+    Write-Host ""
+}
